@@ -1,0 +1,3 @@
+.vagrant
+packages/*
+puppet/modules/*

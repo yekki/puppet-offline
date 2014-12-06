@@ -1,0 +1,37 @@
+forge "https://forge.puppetlabs.com"
+
+mod "orawls",
+ :git => "http://github.com/biemond/biemond-orawls",
+  :ref => "master"
+
+mod "oradb",
+ :git => "http://github.com/biemond/biemond-oradb",
+  :ref => "master"
+
+mod "orautils",
+ :git => "http://github.com/biemond/biemond-orautils",
+  :ref => "master"
+
+mod "jdk7",
+ :git => "http://github.com/biemond/biemond-jdk7",
+  :ref => "master"
+
+mod "yamlfile",
+ :git => "http://github.com/reidmv/puppet-module-yamlfile",
+  :ref => "master"
+
+mod "easy_type",
+ :git => "http://github.com/hajee/easy_type",
+  :ref => "master"
+
+mod "filemapper",
+ :git => "http://github.com/adrienthebo/puppet-filemapper",
+  :ref => "master"
+
+mod "sysctl",
+ :git => "http://github.com/fiddyspence/puppet-sysctl",
+  :ref => "master"
+
+mod "limits",
+ :git => "http://github.com/erwbgy/puppet-limits",
+  :ref => "master"

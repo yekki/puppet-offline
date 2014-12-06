@@ -1,0 +1,144 @@
+---
+
+wls_weblogic_home_dir:    &wls_weblogic_home_dir    "/u01/mw/fmw12c/wlserver"
+wls_middleware_home_dir:  &wls_middleware_home_dir  "/u01/mw/fmw12c"
+wls_version:              &wls_version              1212
+wls_domains_dir:          &wls_domains_dir          '/u01/mw/fmw12c/user_projects/domains'
+wls_apps_dir:             &wls_apps_dir             '/u01/mw/fmw12c/user_projects/applications'
+
+orawls::weblogic::log_output:           true
+orawls::weblogic::wls_domains_dir:      *wls_domains_dir
+orawls::weblogic::wls_apps_dir:         *wls_apps_dir
+orawls::weblogic::version:              *wls_version
+orawls::weblogic::filename:             "fmw_infra_121200.jar"
+orawls::weblogic::middleware_home_dir:  *wls_middleware_home_dir
+orawls::weblogic::fmw_infra:            true
+
+orautils::osMdwHomeParam:         *wls_middleware_home_dir
+orautils::osWlHomeParam:          *wls_weblogic_home_dir
+
+orautils::osDomainTypeParam:      "admin"
+orautils::osDomainParam:          "base_domain"
+orautils::osDomainPathParam:      "/u01/mw/fmw12c/user_projects/domains/base_domain"
+orautils::nodeMgrPathParam:       "/u01/mw/fmw12c/user_projects/domains/base_domain/bin"
+
+orautils::nodeMgrPortParam:       5556
+orautils::nodeMgrAddressParam:    '10.10.10.21'
+orautils::wlsUserParam:           "weblogic"
+orautils::wlsPasswordParam:       "welcome1"
+orautils::wlsAdminServerParam:    "AdminServer"
+
+logoutput:                     &logoutput                     true
+
+# FMW installation on top of WebLogic 12.12
+fmw_installations:
+#  'webtier1212':
+#    fmw_product:             "web"
+#    fmw_file1:               "ofm_ohs_linux_12.1.2.0.0_64_disk1_1of1.zip"
+#    log_output:              true
+#    remote_file:             false
+
+# no patching
+opatch_instances:
+
+# when you have just one domain on a server
+domain_name:                "base_domain"
+domain_adminserver:         "AdminServer"
+domain_adminserver_address: "10.10.10.21"
+domain_adminserver_port:    7001
+domain_nodemanager_port:    5556
+domain_wls_password:        "welcome1"
+domain_user_config_file:    "/home/oracle/oracle-base_domain-WebLogicConfig.properties"
+domain_user_key_file:       "/home/oracle/oracle-base_domain-WebLogicKey.properties"
+
+# create a standard domain
+domain_instances:
+  'base_domain':
+     domain_template:          "standard"
+     development_mode:         true
+     log_output:               *logoutput
+     nodemanager_address:      "10.10.10.21"
+#     repository_database_url:  "jdbc:oracle:thin:@odb.yekki.me:1521/orcl.yekki.me"
+#     repository_prefix:        "DEV"
+#     repository_password:      "welcome1"
+#     repository_sys_password:  "welcome1"
+#     rcu_database_url:         "odb.yekki.me:1521:orcl"
+#     webtier_enabled:          true
+
+# create and startup the nodemanager
+nodemanager_instances:
+  'nodemanager':
+     nodemanager_address:  "10.10.10.21"
+     log_output:           *logoutput
+
+# startup adminserver for extra configuration
+control_instances:
+  'startWLSAdminServer':
+     domain_name:          "base_domain"
+     server_type:          'admin'
+     target:               'Server'
+     server:               'AdminServer'
+     action:               'start'
+     log_output:           *logoutput
+
+# create password file for WLST utility
+userconfig_instances:
+  'base_domain':
+     log_output:           *logoutput
+     user_config_dir:      '/home/oracle'
+
+# fmw cluster 
+fmw_jrf_cluster_instances:
+  'WebCluster':
+     domain_name:          "base_domain"
+     jrf_target_name:      "WebCluster"
+     log_output:           *logoutput
+
+webtier_instances:
+  'ohs1':
+    action_name:           'create'
+    instance_name:         'ohs1'
+    machine_name:          'node1'
+
+# create 2 machines
+machines_instances:
+  'node1':
+    ensure:         'present'
+    listenaddress:  '10.10.10.21'
+    listenport:     '5556'
+    machinetype:    'UnixMachine'
+    nmtype:         'SSL'
+
+managed_servers_instances:
+      'ms1':
+         ensure:                         'present'
+         arguments:                      '-XX:PermSize=256m -XX:MaxPermSize=512m -Xms752m -Xmx1024m -Dweblogic.Stdout=/var/log/weblogic/WebServer1.out -Dweblogic.Stderr=/var/log/weblogic/WebServer1_err.out'
+         listenaddress:                  '10.10.10.21'
+         listenport:                     '8001'
+         logfilename:                    '/var/log/weblogic/ms1.log'
+         machine:                        'node1'
+         sslenabled:                     '1'
+         ssllistenport:                  '8002'
+         sslhostnameverificationignored: '1'
+         jsseenabled:                    '1' 
+      'ms2':
+         ensure:                         'present'
+         arguments:                      '-XX:PermSize=256m -XX:MaxPermSize=256m -Xms752m -Xmx752m -Dweblogic.Stdout=/var/log/weblogic/JmsWlsServer1.out -Dweblogic.Stderr=/var/log/weblogic/JmsWlsServer1_err.out'
+         listenaddress:                  '10.10.10.21'
+         listenport:                     '6001'
+         logfilename:                    '/var/log/weblogic/ms2.log'
+         machine:                        'node1'
+         sslenabled:                     '1'
+         ssllistenport:                  '6002'
+         sslhostnameverificationignored: '1'
+         jsseenabled:                    '1' 
+
+# create cluster and assign the managed servers
+cluster_instances:
+      'cluster':
+        ensure:         'present'
+        messagingmode:  'unicast'
+        migrationbasis: 'consensus'
+        servers:        'ms1,ms2'
+
+
